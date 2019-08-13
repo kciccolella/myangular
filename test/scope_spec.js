@@ -405,6 +405,18 @@ describe('Scope', function() {
 
     });
 
+    it('accepts expressions for watch functions', function() {
+      var theValue;
+
+      scope.aValue = 42;
+      scope.$watch('aValue', function(newValue, oldValue, scope) {
+        theValue = newValue;
+      });
+      scope.$digest();
+
+      expect(theValue).toBe(42);
+    });
+
   });
 
   describe('$eval', function() {
@@ -433,6 +445,10 @@ describe('Scope', function() {
       }, 2);
 
       expect(result).toBe(44);
+    });
+
+    it('accepts expressions in $eval', function() {
+      expect(scope.$eval('42')).toBe(42);
     });
 
   });
@@ -465,6 +481,11 @@ describe('Scope', function() {
         scope.aValue = 'someOtherValue';
       });
       expect(scope.counter).toBe(2);
+    });
+
+    it('accepts expressions in $apply', function() {
+      scope.aFunction = _.constant(42);
+      expect(scope.$apply('aFunction()')).toBe(42);
     });
 
   });
@@ -594,6 +615,20 @@ describe('Scope', function() {
         done();
       }, 50);
 
+    });
+
+    it('accepts expressions in $evalAsync', function(done) {
+      var called;
+      scope.aFunction = function() {
+        called = true;
+      };
+
+      scope.$evalAsync('aFunction()');
+
+      scope.$$postDigest(function() {
+        expect(called).toBe(true);
+        done();
+      });
     });
     
   });
@@ -1699,6 +1734,18 @@ describe('Scope', function() {
       scope.$digest();
 
       expect(oldValueGiven).toEqual({a: 1, b: 2});
+    });
+
+    it('accepts expressions for watch functions', function() {
+      var theValue;
+
+      scope.aColl = [1, 2, 3];
+      scope.$watchCollection('aColl', function(newValue, oldValue, scope) {
+        theValue = newValue;
+      });
+      scope.$digest();
+
+      expect(theValue).toEqual([1, 2, 3]);
     });
 
   });
