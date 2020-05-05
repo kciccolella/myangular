@@ -17,7 +17,7 @@ describe('$q', function() {
     expect(d).toBeDefined();
   });
 
-  fit('has a promise for each Deferred', function() {
+  it('has a promise for each Deferred', function() {
     var d = $q.defer();
     expect(d.promise).toBeDefined();
   });
