@@ -89,12 +89,12 @@ function $HttpProvider() {
     };
   }
 
-  function transformData(data, headers, transform) {
+  function transformData(data, headers, status, transform) {
     if (_.isFunction(transform)) {
-      return transform(data, headers);
+      return transform(data, headers, status);
     } else {
       return _.reduce(transform, function(data, fn) {
-        return fn(data, headers);
+        return fn(data, headers, status);
       }, data);
     }
   }
@@ -102,33 +102,8 @@ function $HttpProvider() {
   this.$get = ['$httpBackend', '$q', '$rootScope',
     function($httpBackend, $q, $rootScope) {
 
-    function $http(requestConfig) {
+    function sendReq(config, reqData) {
       var deferred = $q.defer();
-
-      var config = _.extend({
-        method: 'GET',
-        transformRequest: defaults.transformRequest
-      }, requestConfig);
-      config.headers = mergeHeaders(requestConfig);
-
-      if(_.isUndefined(config.withCredentials) &&
-        !_.isUndefined(defaults.withCredentials)) {
-        config.withCredentials = defaults.withCredentials;
-      }
-
-      var reqData = transformData(
-        config.data,
-        headersGetter(config.headers),
-        config.transformRequest
-      );
-
-      if(_.isUndefined(reqData)) {
-        _.forEach(config.headers, function(v, k) {
-          if (k.toLowerCase() === 'content-type') {
-            delete config.headers[k];
-          }
-        });
-      }
 
       function done(status, response, headersString, statusText) {
         status = Math.max(status, 0);
@@ -152,7 +127,56 @@ function $HttpProvider() {
         config.headers,
         config.withCredentials
       );
+
       return deferred.promise;
+    }
+
+    function $http(requestConfig) {
+      var config = _.extend({
+        method: 'GET',
+        transformRequest: defaults.transformRequest,
+        transformResponse: defaults.transformResponse
+      }, requestConfig);
+      config.headers = mergeHeaders(requestConfig);
+
+      if(_.isUndefined(config.withCredentials) &&
+        !_.isUndefined(defaults.withCredentials)) {
+        config.withCredentials = defaults.withCredentials;
+      }
+
+      var reqData = transformData(
+        config.data,
+        headersGetter(config.headers),
+        undefined,
+        config.transformRequest
+      );
+
+      if(_.isUndefined(reqData)) {
+        _.forEach(config.headers, function(v, k) {
+          if (k.toLowerCase() === 'content-type') {
+            delete config.headers[k];
+          }
+        });
+      }
+
+      function transformResponse(response) {
+        if (response.data) {
+          response.data = transformData(
+            response.data,
+            response.headers,
+            response.status,
+            config.transformResponse
+          );
+        }
+        if (isSuccess(response.status)) {
+          return response;
+        } else {
+          return $q.reject(response);
+        }
+      }
+
+      return sendReq(config, reqData)
+        .then(transformResponse, transformResponse);
     }
     $http.defaults = defaults;
     return $http;
