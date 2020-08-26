@@ -218,6 +218,12 @@ function $HttpProvider() {
 
     function sendReq(config, reqData) {
       var deferred = $q.defer();
+      $http.pendingRequests.push(config);
+      deferred.promise.then(function() {
+        _.remove($http.pendingRequests, config);
+      }, function() {
+        _.remove($http.pendingRequests, config);
+      });
 
       function done(status, response, headersString, statusText) {
         status = Math.max(status, 0);
@@ -325,6 +331,7 @@ function $HttpProvider() {
       return promise;
     }
     $http.defaults = defaults;
+    $http.pendingRequests = [];
     _.forEach(['get', 'head', 'delete'], function(method) {
       $http[method] = function(url, config) {
         return $http(_.extend(config || {}, {
