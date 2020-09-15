@@ -312,4 +312,20 @@ describe('$compile', function() {
 		});
 	});
 
+	it('compiles comment directives', function() {
+		var hasCompiled;
+		var injector = makeInjectorWithDirectives('myDirective', function() {
+			return {
+				compile: function(element) {
+					hasCompiled = true;
+				}
+			};
+		});
+		injector.invoke(function($compile) {
+			var el = $('<!-- directive: my-directive -->');
+			$compile(el);
+			expect(hasCompiled).toBe(true);
+		});
+	});
+
 });
