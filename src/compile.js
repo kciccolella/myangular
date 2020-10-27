@@ -168,6 +168,9 @@ function $CompileProvider($provide) {
             node.childNodes && node.childNodes.length) {
           childLinkFn = compileNodes(node.childNodes);
         }
+        if (nodeLinkFn && nodeLinkFn.scope) {
+          attrs.$$element.addClass('ng-scope');
+        }
         if (nodeLinkFn || childLinkFn) {
           linkFns.push({
             nodeLinkFn: nodeLinkFn,
@@ -185,16 +188,21 @@ function $CompileProvider($provide) {
         });
 
         _.forEach(linkFns, function(linkFn) {
+          var node = stableNodeList[linkFn.idx];
           if (linkFn.nodeLinkFn) {
+            if (linkFn.nodeLinkFn.scope) {
+              scope = scope.$new();
+              $(node).data('$scope', scope);
+            }
             linkFn.nodeLinkFn(
               linkFn.childLinkFn,
               scope,
-              stableNodeList[linkFn.idx]
+              node
             );
           } else {
             linkFn.childLinkFn(
               scope,
-              stableNodeList[linkFn.idx].childNodes
+              node.childNodes
             );
           }
         });
@@ -310,6 +318,7 @@ function $CompileProvider($provide) {
       var terminalPriority = -Number.MAX_VALUE;
       var terminal = false;
       var preLinkFns = [], postLinkFns = [];
+      var newScopeDirective;
 
       function addLinkFns(preLinkFn, postLinkFn, attrStart, attrEnd) {
         if (preLinkFn) {
@@ -333,6 +342,10 @@ function $CompileProvider($provide) {
         
         if (directive.priority < terminalPriority) {
           return false;
+        }
+
+        if (directive.scope) {
+          newScopeDirective = newScopeDirective || directive;
         }
 
         if (directive.compile) {
@@ -365,6 +378,7 @@ function $CompileProvider($provide) {
         });
       }
       nodeLinkFn.terminal = terminal;
+      nodeLinkFn.scope = newScopeDirective && newScopeDirective.scope;
       return nodeLinkFn;
     }
 
