@@ -2,6 +2,15 @@
 
 var _ = require('lodash');
 
+function addToScope(locals, identifier, instance) {
+  if (locals && _.isObject(locals.$scope)) {
+    locals.$scope[identifier] = instance;
+  } else {
+    throw 'Cannot export controller as ' + identifier +
+      '! No $scope object provided via locals';
+  }
+}
+
 function $ControllerProvider() {
 
   var controllers = {};
@@ -21,15 +30,19 @@ function $ControllerProvider() {
 
   this.$get = ['$injector', function($injector) {
 
-    return function(ctrl, locals) {
-      if(_.isString(ctrl)) {
+    return function(ctrl, locals, identifier) {
+      if (_.isString(ctrl)) {
         if (controllers.hasOwnProperty(ctrl)) {
           ctrl = controllers[ctrl];
         } else if (globals) {
           ctrl = window[ctrl];
         }
       }
-      return $injector.instantiate(ctrl, locals);
+      var instance = $injector.instantiate(ctrl, locals);
+      if (identifier) {
+        addToScope(locals, identifier, instance);
+      }
+      return instance;
     };
 
   }];
