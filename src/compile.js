@@ -431,6 +431,7 @@ function $CompileProvider($provide) {
       var terminal = false;
       var preLinkFns = [], postLinkFns = [], controllers = {};
       var newScopeDirective, newIsolateScopeDirective;
+      var templateDirective;
       var controllerDirectives;
 
       function getControllers(require, $element) {
@@ -530,11 +531,15 @@ function $CompileProvider($provide) {
               linkFn.pre, linkFn.post, attrStart, attrEnd, isolateScope, require);
           }
         }
-        if(directive.controller) {
+        if (directive.controller) {
           controllerDirectives = controllerDirectives || {};
           controllerDirectives[directive.name] = directive;
         }
-        if(directive.template) {
+        if (directive.template) {
+          if (templateDirective) {
+            throw 'Multiple directives asking for template';
+          }
+          templateDirective = directive;
           $compileNode.html(directive.template);
         }
         if (directive.terminal) {
