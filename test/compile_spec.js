@@ -4155,5 +4155,16 @@ describe('$compile', function() {
     });
 
   });
+  
+  describe('components', function() {
+
+    it('can be registered and become directives', function() {
+      var myModule = window.angular.module('myModule', []);
+      myModule.component('myComponent', {});
+      var injector = createInjector(['ng', 'myModule']);
+      expect(injector.has('myComponentDirective')).toBe(true);
+    });
+
+  });
 
 });
