@@ -118,7 +118,10 @@ function $CompileProvider($provide) {
 
   this.component = function(name, options) {
     function factory() {
-      return {};
+      return {
+        restrict: 'E',
+        controller: options.controller
+      };
     }
 
     return this.directive(name, factory);
