@@ -4496,6 +4496,38 @@ describe('$compile', function() {
       });
     });
 
+    it('calls $postLink after all linking is done', function() {
+      var invocations = [];
+      var injector = createInjector(['ng', function($compileProvider) {
+        $compileProvider.component('first', {
+          controller: function() {
+            this.$postLink = function() {
+              invocations.push('first controller $postLink');
+            };
+          }
+        });
+        $compileProvider.directive('second', function() {
+          return {
+            controller: function() {
+              this.$postLink = function() {
+                invocations.push('second controller $postLink');
+              };
+            },
+            link: function() { invocations.push('second postLink'); }
+          };
+        });
+      }]);
+      injector.invoke(function($compile, $rootScope) {
+        var el = $('<first><second></second></first>');
+        $compile(el)($rootScope);
+        expect(invocations).toEqual([
+          'second postLink',
+          'second controller $postLink',
+          'first controller $postLink'
+        ]);
+      });
+    });
+
   });
 
 });
