@@ -861,6 +861,11 @@ function $CompileProvider($provide) {
           if (controllerInstance.$onInit) {
             controllerInstance.$onInit();
           }
+          if (controllerInstance.$onDestroy) {
+            (newIsolateScopeDirective ? isolateScope : scope).$on('$destroy', function() {
+              controllerInstance.$onDestroy();
+            });
+          }
         });
 
         function scopeBoundTranscludeFn(transcludedScope, cloneAttachFn) {
